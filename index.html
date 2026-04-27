@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>グルコン講座 アンケート分析レポート</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-color: #185FA5;
+      --primary-light: #E6F1FB;
+      --success-color: #1D9E75;
+      --success-light: #E1F5EE;
+      --warning-color: #BA7517;
+      --warning-light: #FAEEDA;
+      --info-color: #378ADD;
+      --info-light: #E6F1FB;
+      --danger-color: #E24B4A;
+      --border-color: #D3D1C7;
+      --text-primary: #2C2C2A;
+      --text-secondary: #5F5E5A;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F1EFE8;
+      --bg-tertiary: #F8F7F3;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--info-color) 100%);
+      color: white;
+      padding: 3rem 2rem;
+      border-radius: 12px;
+      margin-bottom: 2.5rem;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.95;
+    }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav button {
+      padding: 0.75rem 1.5rem;
+      border: 2px solid var(--primary-color);
+      background: white;
+      color: var(--primary-color);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .nav button.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .nav button:hover {
+      background: var(--primary-light);
+    }
+
+    /* Section */
+    .section {
+      background: var(--bg-primary);
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      border: 1px solid #E0DDD2;
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--primary-color);
+      border-bottom: 3px solid var(--primary-light);
+      padding-bottom: 1rem;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      background: var(--bg-secondary);
+      padding: 1.5rem;
+      border-radius: 10px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .metric-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.25rem;
+    }
+
+    .metric-subtext {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Summary Box */
+    .summary-box {
+      background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-tertiary) 100%);
+      padding: 1.5rem;
+      border-radius: 10px;
+      border-left: 4px solid var(--primary-color);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+
+    .summary-box strong {
+      color: var(--primary-color);
+    }
+
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 350px;
+      margin-bottom: 2rem;
+    }
+
+    /* Insights Grid */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .insight-card {
+      background: var(--bg-secondary);
+      padding: 1.5rem;
+      border-radius: 10px;
+      border-left: 4px solid var(--primary-color);
+      transition: transform 0.2s ease;
+    }
+
+    .insight-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .insight-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .insight-card ul {
+      list-style: none;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .insight-card li {
+      padding: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .insight-card li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    .badge-primary {
+      background: var(--primary-light);
+      color: var(--primary-color);
+    }
+
+    .badge-success {
+      background: var(--success-light);
+      color: var(--success-color);
+    }
+
+    .badge-warning {
+      background: var(--warning-light);
+      color: var(--warning-color);
+    }
+
+    /* Voice Cards */
+    .voice-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .voice-card.breakthrough {
+      border-left-color: var(--info-color);
+      background: linear-gradient(135deg, var(--info-light) 0%, var(--bg-secondary) 100%);
+    }
+
+    .voice-card.growth {
+      border-left-color: var(--success-color);
+      background: linear-gradient(135deg, var(--success-light) 0%, var(--bg-secondary) 100%);
+    }
+
+    .voice-card.reflection {
+      border-left-color: var(--warning-color);
+      background: linear-gradient(135deg, var(--warning-light) 0%, var(--bg-secondary) 100%);
+    }
+
+    .voice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .voice-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    .voice-room {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .voice-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .voice-quote {
+      font-style: italic;
+      color: var(--text-secondary);
+      padding: 1rem;
+      background: rgba(255,255,255,0.6);
+      border-radius: 8px;
+      border-left: 3px solid var(--primary-color);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .voice-context {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    .voice-insights {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .insight-item {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .insight-item:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--primary-color);
+      color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .footer h3 {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+
+    .footer p {
+      opacity: 0.9;
+      line-height: 1.8;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .section {
+        padding: 1.5rem;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .insights-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        flex-direction: column;
+      }
+
+      .nav button {
+        width: 100%;
+      }
+    }
+
+    /* Utility Classes */
+    .mt-2 { margin-top: 1.5rem; }
+    .mb-2 { margin-bottom: 1.5rem; }
+    .text-center { text-align: center; }
+    .text-muted { color: var(--text-secondary); }
+
+    /* Common Pattern Box */
+    .common-pattern {
+      background: linear-gradient(135deg, var(--success-light) 0%, var(--bg-tertiary) 100%);
+      padding: 1.5rem;
+      border-radius: 10px;
+      border-left: 4px solid var(--success-color);
+      margin-top: 2rem;
+    }
+
+    .common-pattern strong {
+      color: var(--success-color);
+    }
+
+    .common-pattern ul {
+      list-style: none;
+      margin-top: 1rem;
+    }
+
+    .common-pattern li {
+      padding: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .common-pattern li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--success-color);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>📊 グルコン講座 アンケート分析レポート</h1>
+      <p>講座生の満足度・理解度・成長を可視化するアンケート分析</p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+      <button class="nav-btn active" data-tab="overview">📈 全体分析</button>
+      <button class="nav-btn" data-tab="satisfaction">⭐ 満足度分析</button>
+      <button class="nav-btn" data-tab="themes">🎯 学習テーマ</button>
+      <button class="nav-btn" data-tab="voices">🎤 講座生の声</button>
+      <button class="nav-btn" data-tab="insights">💡 まとめ</button>
+    </div>
+
+    <!-- Section 1: Overview -->
+    <div class="section active" id="overview">
+      <h2 class="section-title">📈 全体分析 — アンケート集計結果</h2>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">回答者数</div>
+          <div class="metric-value">40</div>
+          <div class="metric-subtext">名</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">平均満足度</div>
+          <div class="metric-value">4.4</div>
+          <div class="metric-subtext">/ 5.0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">高満足度</div>
+          <div class="metric-value">85%</div>
+          <div class="metric-subtext">4点以上</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">トップスコア</div>
+          <div class="metric-value">62.5%</div>
+          <div class="metric-subtext">5点評価</div>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <strong>✓ 講座内容の理解度</strong><br>
+        講座内容の分かりやすさについて、大多数が高い評価を与えています。講師（かよこ先生・えれな先生）の説明が「わかりやすい」「親身」という声が多数あり、複雑な内容も適切に伝わっていることが確認できました。
+      </div>
+
+      <div class="summary-box">
+        <strong>✓ 講座の成果</strong><br>
+        このグルコン講座は、講座生が自分のビジネスを立ち上げ・成長させるための「思考の整理」と「実践への気づき」を与えています。受講後、具体的で実行可能なアクションプランを立案し、実装に向けて動き出す講座生が大多数です。
+      </div>
+    </div>
+
+    <!-- Section 2: Satisfaction Analysis -->
+    <div class="section" id="satisfaction">
+      <h2 class="section-title">⭐ 満足度分析</h2>
+
+      <div class="chart-container">
+        <canvas id="satisfactionChart"></canvas>
+      </div>
+
+      <div class="insights-grid">
+        <div class="insight-card">
+          <h3><span class="badge badge-primary">5点</span>内容が分かりやすかった</h3>
+          <ul>
+            <li>25人（62.5%）</li>
+            <li>最も多くの評価</li>
+            <li>講師の説明力の高さが反映</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <h3><span class="badge badge-primary">4点</span>おおむね満足</h3>
+          <ul>
+            <li>9人（22.5%）</li>
+            <li>軽微な改善点あり</li>
+            <li>基本的には好評</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <h3><span class="badge badge-warning">3点以下</span>改善の機会</h3>
+          <ul>
+            <li>6人（15%）</li>
+            <li>時間配分や参加方法の工夫余地</li>
+            <li>初心者向けサポート強化検討</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Themes -->
+    <div class="section" id="themes">
+      <h2 class="section-title">🎯 主な学習テーマ分析</h2>
+
+      <div class="chart-container">
+        <canvas id="themesChart"></canvas>
+      </div>
+
+      <div class="insights-grid">
+        <div class="insight-card">
+          <h3><span class="badge badge-success">1位</span> コンセプト設計・ポジショニング</h3>
+          <ul>
+            <li>誰に何をどのように売るかの明確化</li>
+            <li>原体験から始まるコンセプト設計</li>
+            <li>差別化による自分のポジション確立</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <h3><span class="badge badge-success">1位</span> 行動・実践の重要性</h3>
+          <ul>
+            <li>完璧を目指さず、まず試す・やってみる</li>
+            <li>学び続けるだけでなくアウトプットが必須</li>
+            <li>モニター募集から商品改善へのサイクル</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <h3><span class="badge badge-primary">3位</span> コミュニティの力</h3>
+          <ul>
+            <li>他の受講生の質問から得られる学び</li>
+            <li>同志との交流による刺激とモチベーション</li>
+            <li>一人で悩まず相談・シェアする文化</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <h3><span class="badge badge-primary">4位</span> 原体験・個性の発掘</h3>
+          <ul>
+            <li>子ども時代のフラストレーションが原点</li>
+            <li>自分だけの言語化が発信力を高める</li>
+            <li>好きなことと売れることの両立戦略</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <h3><span class="badge badge-primary">5位</span> 発信・言語化スキル</h3>
+          <ul>
+            <li>抽象的な考えを具体的に落とし込む方法</li>
+            <li>SNS発信での言語化の練習と改善</li>
+            <li>ターゲットに響く表現方法の工夫</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <h3><span class="badge badge-primary">6位</span> マインドセット</h3>
+          <ul>
+            <li>「できてないから質問できない」の払拭</li>
+            <li>完璧主義から「5点でも出す」への転換</li>
+            <li>起業家マインドへの意識改革</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Voices -->
+    <div class="section" id="voices">
+      <h2 class="section-title">🎤 特筆すべき講座生の声</h2>
+
+      <!-- Voice 1 -->
+      <div class="voice-card breakthrough">
+        <div class="voice-header">
+          <div>
+            <div class="voice-name">青山　陽子さん</div>
+            <div class="voice-room">ラベンダー部屋 • グルコン参加日: 4/20</div>
+          </div>
+          <span class="badge badge-success">大きな決断</span>
+        </div>
+        <div class="voice-title">迷いから確信へ — キャッシュフロー優先戦略の発見</div>
+        <div class="voice-quote">
+          「目指す分野をどれに絞るか迷っていましたが、考え方をお聞きし方向性を決めることが出来ました。私の優先順位は早くキャッシュを得られること。会社員での経験を活かしてオンライン秘書が一番早いと聞いてすぐ動くことを決意しました。」
+        </div>
+        <div class="voice-context">
+          複数の事業選択肢を持ちながら優先順位が曖昧だった状態から、「まずキャッシュ獲得」というシンプルな判断軸を得たことで、迷いが払拭された。好きなこと（マイル・写真）と売れるもの（オンライン秘書）の時間軸を分けるという戦略も習得。
+        </div>
+        <div class="voice-insights">
+          <strong>📌 学んだポイント:</strong>
+          <div class="insight-item">PainとGainの違い理解 → 緊急性の高い案件を優先</div>
+          <div class="insight-item">短期キャッシュと長期育成の二層戦略</div>
+          <div class="insight-item">会社員経験を資産化する発想の転換</div>
+        </div>
+        <div class="meta-row">
+          <span style="background: var(--bg-secondary); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; color: var(--primary-color);">満足度: 5点</span>
+        </div>
+      </div>
+
+      <!-- Voice 2 -->
+      <div class="voice-card breakthrough">
+        <div class="voice-header">
+          <div>
+            <div class="voice-name">中村多恵子さん</div>
+            <div class="voice-room">ひまわり部屋 • グルコン参加日: 4/22</div>
+          </div>
+          <span class="badge badge-success">マインドシフト</span>
+        </div>
+        <div class="voice-title">「5点でも出す」 — 完璧主義からの解放</div>
+        <div class="voice-quote">
+          「『当てはまったら5点でも自分のことにしていい、外に出していい』という視点が衝撃でした。自分に厳しすぎてドツボにハマっている自覚があったからです。肩の力がストンと抜けたような感覚です。自分はとりあえず出す。そして、お客様にはお好きな人を選んでもらう。」
+        </div>
+        <div class="voice-context">
+          マインド学習を深めるほどに「完璧でないと出せない」という心理的なブレーキが強くなっていた。講師が「すごい人にも上がいるけど、外に出しているし出していい」と示すことで、許可を得た感覚に。自己評価の厳しさから脱して、真摯な発信へシフト。
+        </div>
+        <div class="voice-insights">
+          <strong>📌 学んだポイント:</strong>
+          <div class="insight-item">完璧主義が起業を止める最大の要因</div>
+          <div class="insight-item">「比較」から「差別化」への視点転換</div>
+          <div class="insight-item">信頼に基づく発信 > 完璧性に基づく発信</div>
+        </div>
+        <div class="meta-row">
+          <span style="background: var(--bg-secondary); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; color: var(--primary-color);">満足度: 5点</span>
+        </div>
+      </div>
+
+      <!-- Voice 3 -->
+      <div class="voice-card growth">
+        <div class="voice-header">
+          <div>
+            <div class="voice-name">高橋　元子さん</div>
+            <div class="voice-room">さくら部屋 • グルコン参加日: 4/22</div>
+          </div>
+          <span class="badge badge-success">行動への後押し</span>
+        </div>
+        <div class="voice-title">「完成を待つ」から「フリースタイルで10人」へ</div>
+        <div class="voice-quote">
+          「講座を作ってから提供しようとすると手が止まってしまうので、知り合いなど10人にフリースタイルでやってみて、改善しながら講座を作るということ。これなら、できそうと思いました！」
+        </div>
+        <div class="voice-context">
+          完璧な講座コンテンツ作成のハードルで動きが止まっていた人が、「まずフリースタイルで小規模テスト → フィードバック収集 → 改善」というシンプルなサイクルを提示されることで、実行への心理的ハードルが劇的に低下。
+        </div>
+        <div class="voice-insights">
+          <strong>📌 学んだポイント:</strong>
+          <div class="insight-item">完成品発売 < 完成品を早く作ること</div>
+          <div class="insight-item">モニター経験がコンテンツ品質を高める</div>
+          <div class="insight-item">小規模テストの重要性</div>
+        </div>
+        <div class="meta-row">
+          <span style="background: var(--bg-secondary); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; color: var(--primary-color);">満足度: 5点</span>
+        </div>
+      </div>
+
+      <!-- Voice 4 -->
+      <div class="voice-card reflection">
+        <div class="voice-header">
+          <div>
+            <div class="voice-name">浦部吏穂さん</div>
+            <div class="voice-room">ラベンダー部屋 • グルコン参加日: 4/21</div>
+          </div>
+          <span class="badge badge-warning">環境の価値</span>
+        </div>
+        <div class="voice-title">「みんなと同じように迷いながら頑張ってる」の発見</div>
+        <div class="voice-quote">
+          「皆さんそれぞれのステージで、迷いながらもがんばっているというのがわかりました。普段、オープンチャットでの交流になるので、みなさんがすごい先に行っている人って受け取っていたけど、私と同じように迷いながらも取り組んでいることを知って、こちらもますますやる気をいただきました。」
+        </div>
+        <div class="voice-context">
+          SNSなどで見える表面的な成功に隠れた「試行錯誤と迷い」の過程を知ることで、心理的な距離が縮まり、モチベーションが高まった。同志との認識が「すごい人たち」から「同じ船に乗った仲間」へシフト。
+        </div>
+        <div class="voice-insights">
+          <strong>📌 学んだポイント:</strong>
+          <div class="insight-item">成功者も同じように悩んでいる現実</div>
+          <div class="insight-item">迷いながらの行動が標準</div>
+          <div class="insight-item">コミュニティがモチベーション源</div>
+        </div>
+        <div class="meta-row">
+          <span style="background: var(--bg-secondary); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; color: var(--primary-color);">満足度: 5点</span>
+        </div>
+      </div>
+
+      <div class="common-pattern">
+        <strong style="font-size: 1.05rem;">💡 共通パターン</strong>
+        <ul>
+          <li><strong>「知ってた」から「腹落ちした」へ</strong> — 客観的視点により自分事化</li>
+          <li><strong>「完璧を待つ」から「試す」へ</strong> — 行動のハードルが劇的に低下</li>
+          <li><strong>「一人」から「仲間」へ</strong> — コミュニティの心理的安全性効果</li>
+          <li><strong>「目先の売上」から「本当にやりたいこと」へ</strong> — 原体験からの再設計</li>
+          <li><strong>「不足」から「十分」へ</strong> — 自己認識と自己肯定感の向上</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 5: Insights -->
+    <div class="section" id="insights">
+      <h2 class="section-title">💡 まとめ & 今後の改善提案</h2>
+
+      <h3 style="font-size: 1.3rem; color: var(--primary-color); margin-top: 1.5rem; margin-bottom: 1rem;">📌 講座の主な成果</h3>
+      <div class="summary-box">
+        <ul style="list-style: none; padding: 0;">
+          <li style="padding: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+            <span style="position: absolute; left: 0; color: var(--primary-color); font-weight: 600;">✓</span>
+            85%の講座生が満足度4点以上を付与
+          </li>
+          <li style="padding: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+            <span style="position: absolute; left: 0; color: var(--primary-color); font-weight: 600;">✓</span>
+            受講後、具体的で実行可能なアクションプランを立案
+          </li>
+          <li style="padding: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+            <span style="position: absolute; left: 0; color: var(--primary-color); font-weight: 600;">✓</span>
+            自分一人では気づけない「視点」を得られている
+          </li>
+          <li style="padding: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+            <span style="position: absolute; left: 0; color: var(--primary-color); font-weight: 600;">✓</span>
+            コミュニティの中での相互学習が高い価値を生み出している
+          </li>
+        </ul>
+      </div>
+
+      <h3 style="font-size: 1.3rem; color: var(--primary-color); margin-top: 2rem; margin-bottom: 1rem;">🔍 改善のポイント</h3>
+      <div class="insights-grid">
+        <div class="insight-card">
+          <h3>📌 時間の制約</h3>
+          <p>60分は「あっという間」との声あり。グループあたりの人数や質問時間の調整検討余地あり。</p>
+        </div>
+
+        <div class="insight-card">
+          <h3>🎤 参加のハードル</h3>
+          <p>事前質問の提出忘れや、顔出しなしでの参加で交流が深まりきらないケースも。参加ガイダンス強化を検討。</p>
+        </div>
+
+        <div class="insight-card">
+          <h3>📚 段階別対応</h3>
+          <p>ステージ（準備段階～既に事業化している方まで）が混在するため、全員に最適な内容の提供が課題。部屋ごとの最適化検討。</p>
+        </div>
+
+        <div class="insight-card">
+          <h3>💭 概念理解のギャップ</h3>
+          <p>聞いたことのない専門用語に躓く方もいる。用語解説や導入ガイドの充実で、初心者の理解度向上余地あり。</p>
+        </div>
+      </div>
+
+      <h3 style="font-size: 1.3rem; color: var(--primary-color); margin-top: 2rem; margin-bottom: 1rem;">🚀 次のステップ</h3>
+      <div class="summary-box">
+        アンケート結果から確認できた課題（時間配分、参加ハードル、段階別対応など）への改善により、さらに高い満足度と成果を目指すことができます。<br><br>
+        特に「心理的安全性」と「段階別サポート」の強化は、次回以降の講座生の成長をさらに加速させるカギとなるでしょう。
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <h3>グルコン講座 アンケート分析</h3>
+    <p>このレポートは、講座改善と講座生の成長を支援するために作成されました。<br>
+    データに基づく見解で、今後の講座運営の最適化を図ります。</p>
+  </div>
+
+  <script>
+    // Tab Navigation
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.getAttribute('data-tab');
+        
+        // Remove active class from all buttons and sections
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        
+        // Add active class to clicked button and corresponding section
+        btn.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+
+        // Reinitialize charts if needed
+        if (tabName === 'satisfaction') {
+          setTimeout(() => initSatisfactionChart(), 100);
+        }
+        if (tabName === 'themes') {
+          setTimeout(() => initThemesChart(), 100);
+        }
+      });
+    });
+
+    // Chart initialization
+    let satisfactionChart = null;
+    let themesChart = null;
+
+    function initSatisfactionChart() {
+      const ctx = document.getElementById('satisfactionChart');
+      if (!ctx) return;
+
+      if (satisfactionChart) {
+        satisfactionChart.destroy();
+      }
+
+      satisfactionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['5点', '4点', '3点', '2点'],
+          datasets: [{
+            label: '人数',
+            data: [25, 9, 4, 2],
+            backgroundColor: ['#185FA5', '#378ADD', '#BA7517', '#E24B4A'],
+            borderColor: '#D3D1C7',
+            borderWidth: 0.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'x',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 30,
+              grid: { drawBorder: false, color: 'rgba(0,0,0,0.05)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function initThemesChart() {
+      const ctx = document.getElementById('themesChart');
+      if (!ctx) return;
+
+      if (themesChart) {
+        themesChart.destroy();
+      }
+
+      themesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['コンセプト設計\nポジショニング', '行動・実践', 'コミュニティの力', '原体験・個性', '発信・言語化', 'マインド設定', '商品・販売方法'],
+          datasets: [{
+            label: '学んだ人数（複数回答）',
+            data: [18, 18, 16, 15, 14, 12, 10],
+            backgroundColor: '#185FA5',
+            borderColor: '#D3D1C7',
+            borderWidth: 0.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'x',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 20,
+              grid: { drawBorder: false, color: 'rgba(0,0,0,0.05)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize charts on page load
+    window.addEventListener('load', () => {
+      initSatisfactionChart();
+    });
+  </script>
+</body>
+</html>

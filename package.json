@@ -1,0 +1,12 @@
+{
+  "name": "glukkon-survey-report",
+  "version": "1.0.0",
+  "description": "グルコン講座 アンケート分析レポート",
+  "scripts": {
+    "start": "npx http-server",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "keywords": ["survey", "report", "analytics"],
+  "author": "",
+  "license": "MIT"
+}
